@@ -1,18 +1,13 @@
-package com.example.priorityloadservice.service.fairqueue;
+package com.example.priorityloadservice.service;
 
-import android.os.Messenger;
-import android.os.SystemClock;
-import android.util.Log;
-import android.util.Pair;
+import com.example.priorityfileloadservice.library.Priority;
 
-import com.example.priorityfileloadservice.library.Request;
-
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ArrayDeque;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/** WFQ Queue with three priority - Low, Normal and High and type Element - Pair<Request, Message> */
-public class LNHProirityFairQueue {
+/** WFQ Queue with three priority - Low, Normal and High and type Element - Priority */
+public class LnhProirityFairQueue {
 
     /** Field - lock for get */
     private Lock lock = new ReentrantLock();
@@ -34,33 +29,43 @@ public class LNHProirityFairQueue {
     private int mRemainingItem = HIGH_PRIORITY_WEIGHT;
 
     /** Field - Low Priority Queue */
-    private ConcurrentLinkedQueue<Pair<Request, Messenger>> mLowPriorityQueue;
+    private ArrayDeque<Priority> mLowPriorityQueue;
     /** Field - Normal Priority Queue */
-    private ConcurrentLinkedQueue<Pair<Request, Messenger>> mNormalPriorityQueue;
+    private ArrayDeque<Priority> mNormalPriorityQueue;
     /** Field - High Priority Queue */
-    private ConcurrentLinkedQueue<Pair<Request, Messenger>> mHighPriorityQueue;
+    private ArrayDeque<Priority> mHighPriorityQueue;
 
-    public LNHProirityFairQueue() {
-        mLowPriorityQueue = new ConcurrentLinkedQueue<>();
-        mNormalPriorityQueue = new ConcurrentLinkedQueue<>();
-        mHighPriorityQueue = new ConcurrentLinkedQueue<>();
+    /** Class's constructor */
+    public LnhProirityFairQueue() {
+        mLowPriorityQueue = new ArrayDeque<>();
+        mNormalPriorityQueue = new ArrayDeque<>();
+        mHighPriorityQueue = new ArrayDeque<>();
     }
 
-    /** Add element to FairQueue */
-    public boolean offer(Pair<Request, Messenger> aRequestMessengerPair) {
-        int currentPriority = aRequestMessengerPair.first.getPriority();
-        if (currentPriority == Request.LOW_PRIORITY) {
-            return mLowPriorityQueue.offer(aRequestMessengerPair);
-        } else if (currentPriority == Request.NORMAL_PRIORITY) {
-            return mNormalPriorityQueue.offer(aRequestMessengerPair);
-        } else if (currentPriority == Request.HIGH_PRIORITY) {
-            return mHighPriorityQueue.offer(aRequestMessengerPair);
+    /**
+     * Add element to FairQueue
+     *
+     * @param aPriority - elem what added
+     */
+    public boolean add(Priority aPriority) {
+        int currentPriority = aPriority.getPriority();
+        if (currentPriority == Priority.LOW_PRIORITY) {
+            return mLowPriorityQueue.add(aPriority);
+        } else if (currentPriority == Priority.NORMAL_PRIORITY) {
+            return mNormalPriorityQueue.add(aPriority);
+        } else if (currentPriority == Priority.HIGH_PRIORITY) {
+            return mHighPriorityQueue.add(aPriority);
         }
         return false;
     }
 
-    /** Get element from FairQueue with delete or null if empty*/
-    public Pair<Request, Messenger> poll() {
+    /**
+     * Get element from FairQueue with delete
+     *
+     * @return next element if success
+     * null if otherwise
+     */
+    public Priority poll() {
         lock.lock();
 
         if(isEmpty()) {
@@ -76,7 +81,7 @@ public class LNHProirityFairQueue {
                 lock.unlock();
                 return poll();
             } else {
-                Pair<Request, Messenger> result = mHighPriorityQueue.poll();
+                Priority result = mHighPriorityQueue.poll();
                 mRemainingItem--;
                 lock.unlock();
                 return result;
@@ -89,7 +94,7 @@ public class LNHProirityFairQueue {
                 lock.unlock();
                 return poll();
             } else {
-                Pair<Request, Messenger> result = mNormalPriorityQueue.poll();
+                Priority result = mNormalPriorityQueue.poll();
                 mRemainingItem--;
                 lock.unlock();
                 return result;
@@ -102,7 +107,7 @@ public class LNHProirityFairQueue {
                 lock.unlock();
                 return poll();
             } else {
-                Pair<Request, Messenger> result = mLowPriorityQueue.poll();
+                Priority result = mLowPriorityQueue.poll();
                 mRemainingItem--;
                 lock.unlock();
                 return result;
@@ -112,16 +117,25 @@ public class LNHProirityFairQueue {
         return null;
     }
 
-    /** return true if FairQueue is empty, false if otherwise */
+    /**
+     * Check isEmpty
+     *
+     * @return true if FairQueue is empty, false if otherwise
+     */
     public boolean isEmpty() {
         return mHighPriorityQueue.isEmpty() && mLowPriorityQueue.isEmpty() && mNormalPriorityQueue.isEmpty();
     }
 
-    /** return FairQueue size */
+    /**
+     * return FairQueue size
+     *
+     * @return int - Item's count
+     */
     public int size() {
         return mHighPriorityQueue.size() + mNormalPriorityQueue.size() + mLowPriorityQueue.size();
     }
 
+    /** Go to the next Stage */
     private void toNextState() {
         if (mCurrentState == HIGH_STATE) {
             mCurrentState = NORMAL_STATE;
