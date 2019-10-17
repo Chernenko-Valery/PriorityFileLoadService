@@ -15,4 +15,9 @@ public class RequestWithMessenger extends Request {
         super(aPriority, aUrl, aTtl);
         this.mMessenger = aMessenger;
     }
+
+    public RequestWithMessenger(Request aRequest, Messenger aMessenger) {
+        super(aRequest.getPriority(), aRequest.getUrl(), aRequest.getTtl());
+        this.mMessenger = aMessenger;
+    }
 }

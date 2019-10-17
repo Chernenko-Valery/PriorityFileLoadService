@@ -1,7 +1,5 @@
 package com.example.priorityfileloadservice.library;
 
-import androidx.core.app.NotificationCompat;
-
 /** Priority Class */
 public class Priority {
 
