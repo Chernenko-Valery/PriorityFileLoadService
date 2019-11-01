@@ -1,4 +1,4 @@
-package com.example.priorityloadservice.service;
+package com.example.priorityfileloadservice.service;
 
 import com.example.priorityfileloadservice.library.Priority;
 
