@@ -1,5 +1,6 @@
 package com.example.priorityfileloadservice.service;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.RemoteException;
@@ -34,9 +35,10 @@ public class Channel {
             mConnection.connect();
 
             InputStream inputStream = mConnection.getInputStream();
-            //Return response
-            Response response = aStorage.SaveFromInputStream(inputStream, mConnection.getContentLength(), FilenameUtils.getName(url.getPath()));
-
+            int size = mConnection.getContentLength();
+            //Return Uri
+            Uri uri = aStorage.SaveFromInputStream(inputStream, size, FilenameUtils.getName(url.getPath()));
+            Response response = new Response(INTERACTION_CONSTANTS.RESPONSE_STATUS_OK, uri, size);
             inputStream.close();
             return response;
 

@@ -55,7 +55,7 @@ public class PriorityLoadService extends IntentService {
     /** Field - Fair Queue */
     private final LnhProirityFairQueue mRequestQueue = new LnhProirityFairQueue();
     /** Field - Storage */
-    private final Storage mStorage = new Storage();
+    private final Storage mStorage = new Storage(getApplicationContext());
     /** Field - Channel */
     private final Channel mChannel = new Channel();
 
@@ -63,15 +63,16 @@ public class PriorityLoadService extends IntentService {
     private class QueueHandler extends Thread {
 
         /** Field - Lock */
-        private final Lock lock = new ReentrantLock();
+        private final Object lock = new Object();
 
         @Override
         public void run() {
             while(!isInterrupted()) {
-                if(mRequestQueue.isEmpty()) {
-                    //LOCK this Thread. It unlock when Request put in Queue
-                    lock.lock();
-                } else {
+                try {
+                    while (mRequestQueue.isEmpty()) {
+                        //LOCK this Thread. It unlock when Request put in Queue
+                        lock.wait();
+                    }
                     RequestWithMessenger request = (RequestWithMessenger) mRequestQueue.poll();
                     Response response = mChannel.downloadFile(request, mStorage);
                     //Get Answer
@@ -82,10 +83,12 @@ public class PriorityLoadService extends IntentService {
                     answer.setData(bundle);
                     try {
                         request.getMessenger().send(answer);
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
+                    } catch (RemoteException aE) {
+                        aE.printStackTrace();
                         //TODO exception
                     }
+                } catch (InterruptedException aE) {
+                    aE.printStackTrace();
                 }
             }
         }
@@ -133,7 +136,7 @@ public class PriorityLoadService extends IntentService {
                 if(isOnline()) {
                     //add Request in requestQueue
                     mRequestQueue.add(requestWithMessenger);
-                    mQueueHandler.lock.unlock();
+                    mQueueHandler.lock.notify();
                     answer.arg1 = INTERACTION_CONSTANTS.REQUEST_ANSWER_ACCEPTANCE;
                 } else {
                     answer.arg1 = INTERACTION_CONSTANTS.REQUEST_ANSWER_ERROR;

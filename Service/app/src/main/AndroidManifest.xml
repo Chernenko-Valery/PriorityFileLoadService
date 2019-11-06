@@ -13,13 +13,24 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <meta-data
+            android:name="com.google.android.actions"
+            android:resource="@xml/file_paths" />
 
         <service
             android:name=".PriorityLoadService"
             android:enabled="true"
-            android:exported="true">
-        </service>
+            android:exported="true"></service>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.priorityfileloadservice.service"
+            android:exported="false"
+            android:grantUriPermissions="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

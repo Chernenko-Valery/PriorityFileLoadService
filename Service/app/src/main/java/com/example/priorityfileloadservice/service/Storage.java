@@ -1,6 +1,7 @@
 package com.example.priorityfileloadservice.service;
 
 import android.content.Context;
+import android.net.Uri;
 
 import androidx.core.content.FileProvider;
 
@@ -17,10 +18,25 @@ import java.io.InputStream;
 
 public class Storage {
 
-    public Response SaveFromInputStream(InputStream aInputStream, int aSize, String aFileName,Context aContext) {
+    Context mAppContext;
+
+    private static final String FILE_PROVIDER_AUTHORITY = "com.example.priorityfileloadservice.service";
+
+    public Storage(Context mAppContext) {
+        this.mAppContext = mAppContext;
+    }
+
+    /** Save File From Input Stream (Input Stream not closed in ending)
+     *
+     * @param aInputStream - InputStream with file
+     * @param aSize  - File's size
+     * @param aFileName - File's Name
+     * @return Uri - Uri for file*/
+    public Uri SaveFromInputStream(InputStream aInputStream, int aSize, String aFileName) {
         try {
+            File file = new File(aFileName);
             BufferedInputStream bis = new BufferedInputStream(aInputStream);
-            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(new File(aFileName)));
+            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
 
             int c;
             while ( (c=bis.read()) != -1) {
@@ -29,8 +45,8 @@ public class Storage {
             bos.close();
             bis.close();
 
-            //TODO FILEProvider
-            Response response = new Response(INTERACTION_CONSTANTS.RESPONSE_STATUS_OK, "" , aSize)
+            Uri uri = FileProvider.getUriForFile(mAppContext, FILE_PROVIDER_AUTHORITY, file);
+            return uri;
         } catch (IOException e) {
             e.printStackTrace();
         }
